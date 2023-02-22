@@ -1,0 +1,122 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="https://pyscript.net/alpha/pyscript.css" />
+    <script defer src="https://pyscript.net/alpha/pyscript.js"></script>
+    <py-env>
+      - sympy
+    </py-env>
+  </head>
+
+  <body>
+    <p>式１</p>
+    <input id="input_1" class="border">
+    <br>
+    <p>式２</p>
+    <input id="input_2" class="border">
+    <br>
+    <br>
+    <p>解の文字</p>
+    <input id="input_x" class="border">
+    <br>
+    <br>
+    <button id="btn" pys-onClick="GetAns">計算する>>></button>
+    <label id='fuga'>---</label>
+    <py-script>
+from sympy import sympify,pprint,Symbol,solve,init_printing,latex
+import re
+
+ansText = ""
+
+init_printing(use_unicode=True)
+
+def SolveEqua(siki,moji):
+    global ansText
+    sikis = [siki[i] for i in range(len(siki))]
+    que = []
+    for s in sikis:
+        lr = s.split("=")
+        que.append(sympify(lr[0])-sympify(lr[1]))
+    ans = solve(que,moji)#リスト、リストで連立になる
+    #pprint(ans)
+    #print(latex(ans))
+    ansText = str(ans)
+    print(ansText)
+
+
+def Equation(text,moji):
+    SolveEqua(text,moji)
+
+def Math_Checker(t):
+    #ゴリ押しリスト化
+    t=t.replace(" ","")
+    nums = [str(a) for a in range(10)]
+    signs = ["+","-","*","/","^","=","(",")","{","}","[","]"]
+    syms = ["abcdefghijklmnopqrstuvwxyz_"[i] for i in range(26+1)]
+
+    for i in range(len(t)):
+        if not (t[i] in nums or t[i] in signs or t[i] in syms):
+            return False 
+    b = (t.count("=") == 1 
+         and t.count("(") == t.count(")") 
+         and t.count("{") == t.count("}") 
+         and t.count("[") == t.count("]"))
+    return b
+
+def Math_Encode(text):
+    #正規表現とかで置き換え
+    t = text.replace("^","**")
+    #iとlen(t)の関係に注意
+    i = 0
+    while i < len(t)-1:
+        if re.match("[a-z0-9]",t[i]) and (re.match("\(|\{|\[",t[i+1]) or re.match("[a-z]",t[i+1])):
+            t = t[0:i+1] + "*" +  t[i+1:]
+        i+=1
+    #戻り値
+    return t
+
+def Toku(inps,nep):
+    li = inps
+    siki = list()
+    for i in range(len(li)):
+        siki.append(Math_Encode(li[i]))
+    
+    moji_s = set()
+    for m in nep.split(","):
+        moji_s.add(m)
+    moji = list(moji_s)
+
+    #print(siki)
+    #print(moji)
+
+    Equation(siki,moji)
+
+def GetAns(*ags, **kws):
+    inp1 = Element("input_1")
+    inp2 = Element("input_2")
+    inpx = Element("input_x")
+    f = inp1.element.value
+    g = inp2.element.value
+    moji = inpx.element.value
+    siki = []
+    if not len(f) < 3:
+      siki.append(f)
+    if not len(g) < 3:
+      siki.append(g)
+
+    Toku(siki,moji)
+
+    pyscript.write("fuga",ansText)
+    inp1.clear()
+    inp2.clear()
+    inpx.clear()
+
+    </py-script>
+  </body>
+</html>
+
+<style type="text/css">
+  body {
+     margin: 40px;   /* 外側の余白を40pxにする */
+     padding: 0;      /* 内側の余白を消す(念のため) */
+  }
+</style>
